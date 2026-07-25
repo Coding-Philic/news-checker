@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: news-checker-api
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: node dist/main
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001

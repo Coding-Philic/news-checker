@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Build and Production outputs
+/dist
+/build
+/.next/
+/out/
+/.vercel/
+
+# Environment variables and secrets (CRITICAL: Never commit API keys or passwords!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Keep example env files if any
+!.env.example
+
+# Debug and OS Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# IDEs and Editor folders
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+
+# Testing and Coverage
+/coverage
+/.nyc_output
+
+# Temporary and Cache folders
+.cache/
+.tmp/
+.temp/
+*.tsbuildinfo
+test-*.js
+test-db.js

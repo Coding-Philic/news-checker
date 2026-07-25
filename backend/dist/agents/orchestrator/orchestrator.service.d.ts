@@ -1,0 +1,37 @@
+import { ConfigService } from '@nestjs/config';
+import { UserProfile, AgentRunLog } from '../../common/types';
+import { RedisService } from '../../cache/redis.service';
+import { GoogleNewsAgent } from '../search/google-news.agent';
+import { WikipediaAgent } from '../search/wikipedia.agent';
+import { RedditAgent } from '../search/reddit.agent';
+import { NewsDataAgent } from '../search/newsdata.agent';
+import { HackerNewsAgent } from '../search/hackernews.agent';
+import { DevToAgent } from '../search/devto.agent';
+import { DuckDuckGoAgent } from '../search/duckduckgo.agent';
+import { RssFeedsAgent } from '../search/rss-feeds.agent';
+import { RelevanceFilterAgent } from '../filter/relevance-filter.agent';
+import { AggregatorAgent } from '../aggregator/aggregator.agent';
+import { DistributionAgent } from '../distribution/distribution.agent';
+export declare class OrchestratorService {
+    private readonly configService;
+    private readonly redisService;
+    private readonly googleNewsAgent;
+    private readonly wikipediaAgent;
+    private readonly redditAgent;
+    private readonly newsDataAgent;
+    private readonly hackerNewsAgent;
+    private readonly devToAgent;
+    private readonly duckDuckGoAgent;
+    private readonly rssFeedsAgent;
+    private readonly filterAgent;
+    private readonly aggregatorAgent;
+    private readonly distributionAgent;
+    private readonly logger;
+    private readonly supabase;
+    constructor(configService: ConfigService, redisService: RedisService, googleNewsAgent: GoogleNewsAgent, wikipediaAgent: WikipediaAgent, redditAgent: RedditAgent, newsDataAgent: NewsDataAgent, hackerNewsAgent: HackerNewsAgent, devToAgent: DevToAgent, duckDuckGoAgent: DuckDuckGoAgent, rssFeedsAgent: RssFeedsAgent, filterAgent: RelevanceFilterAgent, aggregatorAgent: AggregatorAgent, distributionAgent: DistributionAgent);
+    runForUser(user: UserProfile, triggerType?: 'scheduled' | 'manual'): Promise<AgentRunLog>;
+    getRunStatus(runId: string): Promise<AgentRunLog | null>;
+    private cachedSearch;
+    private storeNewsItems;
+    private generateKeywords;
+}
