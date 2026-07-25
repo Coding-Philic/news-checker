@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/auth.store';
 import { useUIStore } from '../store/ui.store';
 
 interface Profile {
+  id?: string;
   displayName: string;
   timezone: string;
   telegramChatId: string;
