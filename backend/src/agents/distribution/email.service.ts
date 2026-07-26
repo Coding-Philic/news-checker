@@ -17,11 +17,12 @@ export class EmailService {
         host: this.configService.get<string>('smtp.host'),
         port: this.configService.get<number>('smtp.port'),
         secure: false,
+        family: 4, // Force IPv4 to prevent connect ENETUNREACH errors on cloud providers (Render)
         auth: {
           user: this.fromEmail,
           pass: this.configService.get<string>('smtp.pass'),
         },
-      });
+      } as nodemailer.TransportOptions);
       this.logger.log('Email transporter initialized');
     } catch (error) {
       this.logger.warn(`Email transporter init failed: ${error}`);
