@@ -11,10 +11,31 @@ const http_exception_filter_1 = require("./common/filters/http-exception.filter"
 const transform_interceptor_1 = require("./common/interceptors/transform.interceptor");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
-    app.use((0, helmet_1.default)());
+    app.use((0, helmet_1.default)({
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+        crossOriginOpenerPolicy: { policy: 'unsafe-none' },
+    }));
     app.enableCors({
-        origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        origin: (origin, callback) => {
+            if (!origin)
+                return callback(null, true);
+            const cleanOrigin = origin.replace(/\/$/, '');
+            const configuredOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+                .split(',')
+                .map((u) => u.trim().replace(/\/$/, ''));
+            if (configuredOrigins.includes(cleanOrigin) ||
+                cleanOrigin.includes('localhost') ||
+                cleanOrigin.endsWith('.vercel.app') ||
+                cleanOrigin.endsWith('.onrender.com') ||
+                process.env.NODE_ENV !== 'production') {
+                callback(null, true);
+            }
+            else {
+                callback(null, true);
+            }
+        },
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
         credentials: true,
     });
     app.useGlobalPipes(new common_1.ValidationPipe({

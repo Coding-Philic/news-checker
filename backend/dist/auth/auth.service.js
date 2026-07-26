@@ -21,8 +21,15 @@ let AuthService = AuthService_1 = class AuthService {
     logger = new common_1.Logger(AuthService_1.name);
     constructor(configService) {
         this.configService = configService;
-        this.supabase = (0, supabase_js_1.createClient)(this.configService.get('supabase.url'), this.configService.get('supabase.anonKey'));
-        this.supabaseAdmin = (0, supabase_js_1.createClient)(this.configService.get('supabase.url'), this.configService.get('supabase.serviceRoleKey'));
+        const serverAuthOptions = {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false,
+            },
+        };
+        this.supabase = (0, supabase_js_1.createClient)(this.configService.get('supabase.url'), this.configService.get('supabase.anonKey'), serverAuthOptions);
+        this.supabaseAdmin = (0, supabase_js_1.createClient)(this.configService.get('supabase.url'), this.configService.get('supabase.serviceRoleKey'), serverAuthOptions);
         console.log('INIT AUTH SERVICE WITH SUPABASE URL:', this.configService.get('supabase.url'));
     }
     async signup(email, password, displayName, notifications) {

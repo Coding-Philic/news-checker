@@ -9,14 +9,24 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(private readonly configService: ConfigService) {
+    const serverAuthOptions = {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    };
+
     this.supabase = createClient(
       this.configService.get<string>('supabase.url')!,
       this.configService.get<string>('supabase.anonKey')!,
+      serverAuthOptions,
     );
 
     this.supabaseAdmin = createClient(
       this.configService.get<string>('supabase.url')!,
       this.configService.get<string>('supabase.serviceRoleKey')!,
+      serverAuthOptions,
     );
 
     console.log('INIT AUTH SERVICE WITH SUPABASE URL:', this.configService.get<string>('supabase.url'));
