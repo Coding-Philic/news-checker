@@ -22,8 +22,20 @@ export class TelegramService implements OnModuleInit {
   onModuleInit() {
     if (this.botToken) {
       try {
+        // Suppress node-telegram-bot-api deprecation warning for deleteWebHook
+        process.env.NTBA_FIX_319 = '1';
         this.bot = new TelegramBot(this.botToken, { polling: true });
         this.logger.log('Telegram Bot API polling started');
+
+        this.bot.on('polling_error', (error: any) => {
+          if (error.code === 'ETELEGRAM' && error.message?.includes('409 Conflict')) {
+            this.logger.warn(
+              'Telegram 409 Conflict: Another instance of this bot is already polling (e.g. your local server or an old deploy container). Only one instance can poll Telegram at a time.',
+            );
+          } else {
+            this.logger.error(`Telegram polling error: ${error.message || error}`);
+          }
+        });
 
         this.bot.onText(/\/start (.+)/, async (msg: any, match: any) => {
           const chatId = msg.chat.id.toString();

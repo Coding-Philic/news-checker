@@ -34,8 +34,17 @@ let TelegramService = TelegramService_1 = class TelegramService {
     onModuleInit() {
         if (this.botToken) {
             try {
+                process.env.NTBA_FIX_319 = '1';
                 this.bot = new node_telegram_bot_api_1.default(this.botToken, { polling: true });
                 this.logger.log('Telegram Bot API polling started');
+                this.bot.on('polling_error', (error) => {
+                    if (error.code === 'ETELEGRAM' && error.message?.includes('409 Conflict')) {
+                        this.logger.warn('Telegram 409 Conflict: Another instance of this bot is already polling (e.g. your local server or an old deploy container). Only one instance can poll Telegram at a time.');
+                    }
+                    else {
+                        this.logger.error(`Telegram polling error: ${error.message || error}`);
+                    }
+                });
                 this.bot.onText(/\/start (.+)/, async (msg, match) => {
                     const chatId = msg.chat.id.toString();
                     const userId = match?.[1];
