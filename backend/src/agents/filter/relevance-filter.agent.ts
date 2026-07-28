@@ -6,23 +6,24 @@ import { NewsItem } from '../../common/types';
 export class RelevanceFilterAgent {
   private readonly logger = new Logger(RelevanceFilterAgent.name);
   private readonly groqApiKey: string;
+  private readonly fallbackModels = [
+    'llama-3.1-8b-instant',
+    'llama-3.3-70b-versatile',
+    'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.6-27b'
+  ];
 
   constructor(private readonly configService: ConfigService) {
     this.groqApiKey = this.configService.get<string>('groq.apiKey') || '';
   }
 
   private getModelForSource(sourceName: string): string {
-    const models = [
-      'openai/gpt-oss-20b',
-      'openai/gpt-oss-120b',
-      'qwen/qwen3.6-27b',
-      'llama-3.3-70b-versatile',
-    ];
     let hash = 0;
     for (let i = 0; i < sourceName.length; i++) {
       hash = sourceName.charCodeAt(i) + ((hash << 5) - hash);
     }
-    return models[Math.abs(hash) % models.length];
+    return this.fallbackModels[Math.abs(hash) % this.fallbackModels.length];
   }
 
   async triageHeadlines(
@@ -98,6 +99,7 @@ Rules:
 1. Rewrite the title to be catchy, engaging, and easy to understand.
 2. Write a clear, comprehensive summary (around 120-180 words) that explains what happened, why it matters, and covers ALL the important points and key takeaways from the text.
 3. Explain or simplify any complex terminology, technical jargon, or acronyms so anyone can understand it. Use accessible language.
+4. The summary MUST have a very natural, conversational, and human flow. Write it exactly as a human storyteller or news anchor would speak it aloud. Avoid any robotic, overly formal, or rigid phrasing.
 
 Title: ${title}
 Text: ${text}
@@ -209,7 +211,7 @@ Respond in valid JSON format only:
     }
   }
 
-  private async callGroq(prompt: string, model: string, maxTokens: number, useJsonFormat = true): Promise<string> {
+  private async executeGroqRequest(prompt: string, model: string, maxTokens: number, useJsonFormat: boolean): Promise<string> {
     const body: any = {
       model: model,
       messages: [
@@ -237,12 +239,11 @@ Respond in valid JSON format only:
     });
 
     if (!response.ok) {
-      const err = await response.text();
-      if (useJsonFormat && (err.includes('json_validate_failed') || err.includes('invalid_request_error') || response.status === 400)) {
-        this.logger.warn(`Groq strict JSON format validation failed for ${model}. Retrying without strict response_format...`);
-        return this.callGroq(prompt, model, maxTokens, false);
-      }
-      throw new Error(`Groq error ${response.status}: ${err}`);
+      const errText = await response.text();
+      const errObj = new Error(`Groq error ${response.status}: ${errText}`) as any;
+      errObj.status = response.status;
+      errObj.errText = errText;
+      throw errObj;
     }
 
     const data = await response.json();
@@ -250,5 +251,44 @@ Respond in valid JSON format only:
     if (!content) throw new Error('No content returned');
     
     return content;
+  }
+
+  private async callGroq(prompt: string, initialModel: string, maxTokens: number, useJsonFormat = true): Promise<string> {
+    const modelsToTry = [initialModel, ...this.fallbackModels.filter(m => m !== initialModel)];
+
+    for (let i = 0; i < modelsToTry.length; i++) {
+      const model = modelsToTry[i];
+      try {
+        return await this.executeGroqRequest(prompt, model, maxTokens, useJsonFormat);
+      } catch (error: any) {
+        const errText = error.errText || error.message || '';
+        const status = error.status;
+
+        if (useJsonFormat && (errText.includes('json_validate_failed') || errText.includes('invalid_request_error') || status === 400)) {
+          this.logger.warn(`Groq strict JSON format validation failed for ${model}. Retrying without strict response_format...`);
+          try {
+            return await this.executeGroqRequest(prompt, model, maxTokens, false);
+          } catch (retryError: any) {
+            if (retryError.status === 429 || retryError.status >= 500) {
+              this.logger.warn(`Model ${model} failed after strict retry with status ${retryError.status}.`);
+              if (i < modelsToTry.length - 1) continue;
+            }
+            throw retryError;
+          }
+        }
+
+        if (status === 429 || status >= 500 || (error.message && error.message.includes('fetch failed'))) {
+          this.logger.warn(`Model ${model} failed with status ${status || 'network error'}: ${errText}.`);
+          if (i < modelsToTry.length - 1) {
+            this.logger.log(`Falling back to next model: ${modelsToTry[i + 1]}`);
+            continue;
+          }
+        }
+
+        throw error;
+      }
+    }
+    
+    throw new Error('All fallback models failed.');
   }
 }

@@ -4,6 +4,7 @@ export declare class RelevanceFilterAgent {
     private readonly configService;
     private readonly logger;
     private readonly groqApiKey;
+    private readonly fallbackModels;
     constructor(configService: ConfigService);
     private getModelForSource;
     triageHeadlines(items: NewsItem[], userCategories: string[], sourceName: string): Promise<NewsItem[]>;
@@ -15,5 +16,6 @@ export declare class RelevanceFilterAgent {
     filterItems(items: NewsItem[], userCategories: string[], sourceName: string): Promise<NewsItem[]>;
     private stage1HeadlineTriage;
     private parseJsonSafely;
+    private executeGroqRequest;
     private callGroq;
 }
