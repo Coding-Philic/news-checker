@@ -56,6 +56,34 @@ export default function Article() {
     day: 'numeric',
   });
 
+  const handleSpeak = (title: string, summary: string) => {
+    // Stop any ongoing speech
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(`${title}. ${summary}`);
+    
+    // Make the voice slower
+    utterance.rate = 0.85; 
+
+    // Attempt to find a female voice
+    const voices = window.speechSynthesis.getVoices();
+    const femaleVoice = voices.find(
+      (voice) => 
+        voice.name.includes('Female') || 
+        voice.name.includes('Samantha') || 
+        voice.name.includes('Victoria') || 
+        voice.name.includes('Zira') ||
+        voice.name.includes('Karen') ||
+        voice.name.includes('Moira')
+    );
+    
+    if (femaleVoice) {
+      utterance.voice = femaleVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
     <div className="app-shell">
       <div className="main-content" style={{ maxWidth: '800px', margin: '0 auto', padding: '32px 16px' }}>
@@ -106,6 +134,18 @@ export default function Article() {
             }}
           >
             {article.summary}
+          </div>
+
+          <div style={{ marginTop: 24, display: 'flex', alignItems: 'center' }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => handleSpeak(article.title, article.summary)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+              title="Read aloud"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+              Listen to News
+            </button>
           </div>
 
           <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--border)' }}>

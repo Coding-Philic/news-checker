@@ -100,6 +100,37 @@ export default function Dashboard() {
     return colors[platform] || 'badge-neutral';
   };
 
+  const handleSpeak = (e: React.MouseEvent, title: string, summary: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Stop any ongoing speech
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(`${title}. ${summary}`);
+    
+    // Make the voice slower
+    utterance.rate = 0.85; 
+
+    // Attempt to find a female voice
+    const voices = window.speechSynthesis.getVoices();
+    const femaleVoice = voices.find(
+      (voice) => 
+        voice.name.includes('Female') || 
+        voice.name.includes('Samantha') || 
+        voice.name.includes('Victoria') || 
+        voice.name.includes('Zira') ||
+        voice.name.includes('Karen') ||
+        voice.name.includes('Moira')
+    );
+    
+    if (femaleVoice) {
+      utterance.voice = femaleVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
     <div className="app-shell">
       {/* Sidebar */}
@@ -246,6 +277,14 @@ export default function Dashboard() {
                         <span className="news-card-time">
                           {formatTime(item.published_at || item.fetched_at)}
                         </span>
+                        <button
+                          className="btn btn-ghost"
+                          onClick={(e) => handleSpeak(e, item.title, item.summary)}
+                          style={{ marginLeft: 'auto', padding: 4 }}
+                          title="Read aloud"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                        </button>
                       </div>
                     </div>
                   </a>
